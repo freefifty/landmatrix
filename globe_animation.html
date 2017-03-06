@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- D3 -->
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <!-- STYLES -->
+  <link rel="stylesheet" href="css/map.css">
+
+    <script type="text/javascript">  
+      function draw(geo_data) {
+        "use strict";
+        var margin = 75,
+            width = 1200 - margin,
+            height = 500 - margin;
+
+        d3.select('body')
+          .append('h2')
+          .text('Land Deals <work in progress>');
+
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width + margin)
+            .attr("height", height + margin)
+            .append('g')
+            .attr('class', 'map');
+
+        // selects the mercator projection for the map - the map is more exact near the equator,
+         // and more stretched near the poles    
+        var projection = d3.geo.mercator()
+          // zoom
+          .scale(130)
+          // moves the centre of the map
+          // the height values is played around so that in the browser used for testing Antarctica is gone
+          // setting width and height of the map, see above, also plays a role
+          .translate([width/2, 7*height/8]);
+
+        // displays a polygon of our path - correctly renders pixels
+        var path = d3.geo.path().projection(projection);
+
+        // load deal data
+        d3.dsv(";")("data/land_matrix_fixed.csv", function(deals){
+          deals = deals.slice(0,127);
+
+          // clean opening and closing whitespace in deals - target and investor country names
+          deals.forEach(function(d){
+            d.target_country = d.target_country.replace(/\s$/g, '');
+            d.target_country = d.target_country.replace(/^\s/g, '');
+            d.investor_country = d.investor_country.replace(/\s$/g, '');
+            d.investor_country = d.investor_country.replace(/\^s/g, '');
+          })
+
+          geo_data.features.forEach(function(d){
+            d.properties.name = d.properties.name.replace(/\s$/g, '');
+            d.properties.name = d.properties.name.replace(/^\s/g, '');
+          })
+
+          // find all investor countries in the data
+          var investor_countries = {};
+          deals.forEach(function(d,i){
+            var country_name = d.investor_country;
+            var list_of_investor_countries = country_name.split(",");
+            list_of_investor_countries.forEach(function(d){
+              // remove whitespace from country names and add to dictionary
+              investor_countries[d] = true;
+            })
+          });
+          console.log("The number of investor countries is", Object.keys(investor_countries).length);
+          console.log('Investor countries', investor_countries);
+
+          // find all seller/lender countries in the date
+          var lender_countries = {};
+          deals.forEach(function(d,i){
+            var country_name = d.target_country;
+            var list_of_investor_countries = country_name.split(",");
+            list_of_investor_countries.forEach(function(d){
+              // remove whitespace from country names and add to dictionary
+              lender_countries[country_name] = true;
+            })
+          });
+          console.log("The number of lender countries is", Object.keys(lender_countries).length);
+          console.log('lender countries', lender_countries);
+
+          var previously_clicked = "";
+          // loads the projection of the map on our page
+          var map = svg.selectAll('path')
+                     .data(geo_data.features)
+                     .enter()
+                     .append('path')
+                     .attr('d', path)
+                     .style('fill',  function (d) {
+                        if(investor_countries.hasOwnProperty(d.properties.name)){
+                          return '#926239';
+                        } else {
+                          return "lightGrey"; 
+                        }
+                      })
+                     .style('stroke', 'black')
+                     .style('stroke-width', 0.5)
+                     .on("click", function(d) {
+                        console.log("country name", d.properties.name);
+                        var country_name = d.properties.name;
+
+                        // clear all previously-clicked-entries style
+                        if(previously_clicked != ""){
+                          d3.select(previously_clicked).style('fill', function (d) {
+                            // if(lender_countries.hasOwnProperty(country_name)){
+                              // console.log('here');
+                              // return '#396992';
+                            // } else 
+                            if(investor_countries.hasOwnProperty(country_name)){
+                              return '#926239';
+                            } else {
+                              return "lightGrey"; 
+                            }
+                          })
+                        }
+                        // update the style of this entry
+                        d3.select(this).style("fill", 'lightBlue');
+                        previously_clicked = this;
+
+                        // find all deals with this country as an investor
+                        var investor_country_deals = deals.filter(function(d) {
+                          return d.investor_country === country_name;
+                        });
+                    })
+                     .on({"mouseover": function(d) {
+                        d3.select(this).style("cursor", "pointer")
+                      },
+                        "mouseout": function(d) {
+                        d3.select(this).style("cursor", "default")
+                      }
+                    });
+
+        // closes deals data loading
+        });
+
+      // closes globe data loading
+      };
+
+    </script>
+
+  </head>
+
+<body>
+
+<div class="legend">
+    <h4>Legend</h4>
+    
+    <div>
+      <p class="country-name">
+        <span class="key-dot investors"></span>
+        Investor Countries
+      </p>
+    </div>
+  </div>
+  
+  <script type="text/javascript">
+  /*
+    Use D3 to load the GeoJSON file
+    */  
+  d3.json("data/world_countries.json", draw);
+  </script>
+
+</body>
+</html>
