@@ -40,7 +40,7 @@
         var path = d3.geo.path().projection(projection);
 
         // load deal data
-        d3.dsv(";")("data/land_matrix_fixed.csv", function(deals){
+        d3.dsv(";")("data/landmatrix/land_matrix_fixed.csv", function(deals){
           deals = deals.slice(0,127);
 
           // clean opening and closing whitespace in deals - target and investor country names
@@ -160,7 +160,7 @@
   /*
     Use D3 to load the GeoJSON file
     */  
-  d3.json("data/world_countries.json", draw);
+  d3.json("data/landmatrix/world_countries.json", draw);
   </script>
 
 </body>
