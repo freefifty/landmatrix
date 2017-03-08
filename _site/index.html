@@ -121,6 +121,8 @@
                         var investor_country_deals = deals.filter(function(d) {
                           return d.investor_country === country_name;
                         });
+
+                        console.log(investor_country_deals.length);
                     })
                      .on({"mouseover": function(d) {
                         d3.select(this).style("cursor", "pointer")

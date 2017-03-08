@@ -5,3 +5,7 @@ Initial work:
 2. Loaded data  
 3. Started exploration  
  - visually highlighted all countries who invested in land over the world  
+  
+Current TODO:  
+ - split investor_countries when they are more than one  
+ - create arches from investor_country to lender_countries  
