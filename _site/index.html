@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <!-- D3 -->
-  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
 
   <!-- STYLES -->
   <link rel="stylesheet" href="css/landmatrix/map.css">
@@ -41,7 +41,6 @@
 
         // load deal data
         d3.dsv("|")("data/landmatrix/all_fixed.csv", function(deals){
-          console.log(deals);
 
           // clean opening and closing whitespaces in geo_data names
           geo_data.features.forEach(function(d){
