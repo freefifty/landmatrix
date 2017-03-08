@@ -40,17 +40,10 @@
         var path = d3.geo.path().projection(projection);
 
         // load deal data
-        d3.dsv(";")("data/landmatrix/land_matrix_fixed.csv", function(deals){
-          deals = deals.slice(0,127);
+        d3.dsv("|")("data/landmatrix/all_fixed.csv", function(deals){
+          console.log(deals);
 
-          // clean opening and closing whitespace in deals - target and investor country names
-          deals.forEach(function(d){
-            d.target_country = d.target_country.replace(/\s$/g, '');
-            d.target_country = d.target_country.replace(/^\s/g, '');
-            d.investor_country = d.investor_country.replace(/\s$/g, '');
-            d.investor_country = d.investor_country.replace(/\^s/g, '');
-          })
-
+          // clean opening and closing whitespaces in geo_data names
           geo_data.features.forEach(function(d){
             d.properties.name = d.properties.name.replace(/\s$/g, '');
             d.properties.name = d.properties.name.replace(/^\s/g, '');
@@ -83,17 +76,22 @@
           console.log('lender countries', lender_countries);
 
           var previously_clicked = "";
-          // loads the projection of the map on our page
+
           var map = svg.selectAll('path')
                      .data(geo_data.features)
                      .enter()
                      .append('path')
                      .attr('d', path)
                      .style('fill',  function (d) {
-                        if(investor_countries.hasOwnProperty(d.properties.name)){
-                          return '#926239';
+                      if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
+                        return '#396992';
+                      } else if(investor_countries.hasOwnProperty(d.properties.name)){
+                          return '#399262';
+                        } else if(lender_countries.hasOwnProperty(d.properties
+                          .name)){
+                            return '#926239'
                         } else {
-                          return "lightGrey"; 
+                          return "lightGrey";
                         }
                       })
                      .style('stroke', 'black')
@@ -105,14 +103,14 @@
                         // clear all previously-clicked-entries style
                         if(previously_clicked != ""){
                           d3.select(previously_clicked).style('fill', function (d) {
-                            // if(lender_countries.hasOwnProperty(country_name)){
-                              // console.log('here');
-                              // return '#396992';
-                            // } else 
-                            if(investor_countries.hasOwnProperty(country_name)){
-                              return '#926239';
+                            if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
+                              return '#396992';
+                            } else if(investor_countries.hasOwnProperty(d.properties.name)){
+                              return '#399262';
+                            } else if(lender_countries.hasOwnProperty(d.properties.name)){
+                                return '#926239'
                             } else {
-                              return "lightGrey"; 
+                              return "lightGrey";
                             }
                           })
                         }
@@ -151,7 +149,15 @@
     <div>
       <p class="country-name">
         <span class="key-dot investors"></span>
-        Investor Countries
+        Investor countries
+      </p>
+      <p class="country-name">
+        <span class="key-dot lenders"></span>
+        Lender countries
+      </p>
+      <p class="country-name">
+        <span class="key-dot both"></span>
+        Both
       </p>
     </div>
   </div>
