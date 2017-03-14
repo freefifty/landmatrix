@@ -39,101 +39,171 @@
         // displays a polygon of our path - correctly renders pixels
         var path = d3.geo.path().projection(projection);
 
-        // load deal data
+        var g = svg.append("g");
+
+        // load country centroid data
         d3.dsv("|")("data/landmatrix/all_fixed.csv", function(deals){
 
-          // clean opening and closing whitespaces in geo_data names
-          geo_data.features.forEach(function(d){
-            d.properties.name = d.properties.name.replace(/\s$/g, '');
-            d.properties.name = d.properties.name.replace(/^\s/g, '');
-          })
+        // load deal data
+          d3.dsv("\t")("data/landmatrix/country_centroids_all.csv", function(centroids){
 
-          // find all investor countries in the data
-          var investor_countries = {};
-          deals.forEach(function(d,i){
-            var country_name = d.investor_country;
-            var list_of_investor_countries = country_name.split(",");
-            list_of_investor_countries.forEach(function(d){
-              // remove whitespace from country names and add to dictionary
-              investor_countries[d] = true;
+            // clean opening and closing whitespaces in geo_data names
+            geo_data.features.forEach(function(d){
+              d.properties.name = d.properties.name.replace(/\s$/g, '');
+              d.properties.name = d.properties.name.replace(/^\s/g, '');
             })
-          });
-          console.log("The number of investor countries is", Object.keys(investor_countries).length);
-          console.log('Investor countries', investor_countries);
 
-          // find all seller/lender countries in the date
-          var lender_countries = {};
-          deals.forEach(function(d,i){
-            var country_name = d.target_country;
-            var list_of_investor_countries = country_name.split(",");
-            list_of_investor_countries.forEach(function(d){
-              // remove whitespace from country names and add to dictionary
-              lender_countries[country_name] = true;
-            })
-          });
-          console.log("The number of lender countries is", Object.keys(lender_countries).length);
-          console.log('lender countries', lender_countries);
+            // find all investor countries in the data
+            // put them in a dictionary: {name: center_coordinates}
+            var investor_countries = {};
+            deals.forEach(function(d,i){
+              var country_name = d.investor_country;
+              var list_of_investor_countries = country_name.split(",");
+              list_of_investor_countries.forEach(function(d){
+              var country_centroid = centroids.filter(function(d){
+                return d.SHORT_NAME == country_name;
+              });
+              try{
+                investor_countries[d] = [country_centroid[0].LONG, country_centroid[0].LAT];
+              } catch(err) {
+                console.log('Could not get center coordinates for', country_name);
+              }
+              })
+            });
 
-          var previously_clicked = "";
+            // find all seller/lender countries in the date
+            // put them in a dictionary: {name: center_coordinates}
+            var lender_countries = {};
+            deals.forEach(function(d,i){
+              var country_name = d.target_country;
+              var list_of_investor_countries = country_name.split(",");
+              list_of_investor_countries.forEach(function(d){
+              var country_centroid = centroids.filter(function(d){
+                return d.SHORT_NAME == country_name;
+              });
+              try{
+                lender_countries[d] = [country_centroid[0].LONG, country_centroid[0].LAT];
+              } catch(err) {
+                console.log('Could not get center coordinates for', country_name);
+              }
+              })
+            });
+            console.log(lender_countries);
+            var previously_clicked = "";
 
-          var map = svg.selectAll('path')
-                     .data(geo_data.features)
-                     .enter()
-                     .append('path')
-                     .attr('d', path)
-                     .style('fill',  function (d) {
-                      if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
-                        return '#396992';
-                      } else if(investor_countries.hasOwnProperty(d.properties.name)){
-                          return '#399262';
-                        } else if(lender_countries.hasOwnProperty(d.properties
-                          .name)){
-                            return '#926239'
-                        } else {
-                          return "lightGrey";
-                        }
-                      })
-                     .style('stroke', 'black')
-                     .style('stroke-width', 0.5)
-                     .on("click", function(d) {
-                        console.log("country name", d.properties.name);
-                        var country_name = d.properties.name;
+            var map = svg.selectAll('path')
+                       .data(geo_data.features)
+                       .enter()
+                       .append('path')
+                       .attr('d', path)
+                       .style('fill',  function (d) {
+                        if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
+                          return '#396992';
+                        } else if(investor_countries.hasOwnProperty(d.properties.name)){
+                            return '#399262';
+                          } else if(lender_countries.hasOwnProperty(d.properties
+                            .name)){
+                              return '#926239'
+                          } else {
+                            return "lightGrey";
+                          }
+                        })
+                       .style('stroke', 'black')
+                       .style('stroke-width', 0.5)
+                       .on("click", function(d) {
+                          console.log("country name", d.properties.name);
+                          var country_name = d.properties.name;
 
-                        // clear all previously-clicked-entries style
-                        if(previously_clicked != ""){
-                          d3.select(previously_clicked).style('fill', function (d) {
-                            if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
-                              return '#396992';
-                            } else if(investor_countries.hasOwnProperty(d.properties.name)){
-                              return '#399262';
-                            } else if(lender_countries.hasOwnProperty(d.properties.name)){
-                                return '#926239'
-                            } else {
-                              return "lightGrey";
+                          // clear all previously-clicked-entries style
+                          if(previously_clicked != ""){
+                            d3.select(previously_clicked).style('fill', function (d) {
+                              if (investor_countries.hasOwnProperty(d.properties.name) && lender_countries.hasOwnProperty(d.properties.name)){
+                                return '#396992';
+                              } else if(investor_countries.hasOwnProperty(d.properties.name)){
+                                return '#399262';
+                              } else if(lender_countries.hasOwnProperty(d.properties.name)){
+                                  return '#926239'
+                              } else {
+                                return "lightGrey";
+                              }
+                            })
+                          }
+                          // update the style of this entry
+                          d3.select(this).style("fill", 'lightBlue');
+                          previously_clicked = this;
+
+                          // find all deals with this country as an investor
+                          var investor_country_deals = deals.filter(function(d) {
+                            return d.investor_country === country_name;
+                          });
+
+                          var links = [];
+                          for(var i=0;i<investor_country_deals.length; i++){
+                            var lender_country = investor_country_deals[i].target_country
+                            console.log('LENDER:', lender_country);
+                            var lender_coordinates = lender_countries[lender_country]
+                            if(lender_coordinates != true){
+                              var investor_coordinates = investor_countries[country_name]
+                              // create an arc between the investor and lender country
+                              if(investor_coordinates != true){
+                                console.log(investor_coordinates, lender_coordinates);
+                                try{
+                                  links.push({
+                                    type: "LineString",
+                                    coordinates: [
+                                        // investor long, lat
+                                        [ investor_coordinates[1], investor_coordinates[0] ],
+                                        // lender long, lat
+                                        [ lender_coordinates[1], lender_coordinates[0] ]
+                                      ]
+                                  });
+                                } catch(err){
+                                  console.log("The arc", country_name, "-", lender_country, "could not be built.");
+                                }
+                              }
                             }
-                          })
+                          }
+                          
+                          // build arches between this investor country and its lender countries
+                          var arcGroup = g.append('g');
+                         // Standard enter / update 
+                        var pathArcs = arcGroup.selectAll(".arc")
+                            .data(links);
+                        
+                        //enter
+                        pathArcs.enter()
+                            .append("path")
+                            .attr({
+                                'class': 'arc'
+                            })
+                            .style({ 
+                                fill: 'none',
+                            });
+                        
+                        //update
+                        pathArcs.attr({
+                          //d is the points attribute for this path, we'll draw
+                          //  an arc between the points using the arc function
+                          d: path
+                        })
+                        .style({
+                          stroke: '#0000ff',
+                          'stroke-width': '2px'
+                        })
+
+                      })
+                       .on({"mouseover": function(d) {
+                          d3.select(this).style("cursor", "pointer")
+                        },
+                          "mouseout": function(d) {
+                          d3.select(this).style("cursor", "default")
                         }
-                        // update the style of this entry
-                        d3.select(this).style("fill", 'lightBlue');
-                        previously_clicked = this;
+                      });
 
-                        // find all deals with this country as an investor
-                        var investor_country_deals = deals.filter(function(d) {
-                          return d.investor_country === country_name;
-                        });
-
-                        console.log(investor_country_deals.length);
-                    })
-                     .on({"mouseover": function(d) {
-                        d3.select(this).style("cursor", "pointer")
-                      },
-                        "mouseout": function(d) {
-                        d3.select(this).style("cursor", "default")
-                      }
-                    });
-
-        // closes deals data loading
-        });
+          // closes deals data loading
+          });
+      // close country centroid data loading
+      });
 
       // closes globe data loading
       };
