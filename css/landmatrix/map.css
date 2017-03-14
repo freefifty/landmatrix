@@ -46,3 +46,9 @@ div.years-buttons div {
 .investors { background: #399262;}
 .lenders { background: #926239;}
 .both { background: #396992;}
+
+.ToDo {
+  position: absolute;
+  bottom: 0px;
+  left: 20px;
+}
