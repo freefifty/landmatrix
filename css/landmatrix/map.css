@@ -52,3 +52,9 @@ div.years-buttons div {
   bottom: 0px;
   left: 20px;
 }
+
+.data {
+  position: absolute;
+  bottom: 0px;
+  right: 20px;
+}
